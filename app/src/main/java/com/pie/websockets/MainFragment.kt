@@ -18,13 +18,10 @@ import okhttp3.WebSocketListener
 
 class MainFragment : Fragment() {
     private lateinit var viewModel: MainViewModel
-    private lateinit var webSocketListener: PieWebSocketListener
-    private val okHttpClient = OkHttpClient()
-    private var webSocket: WebSocket? =null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-        webSocketListener = PieWebSocketListener(viewModel)
     }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,30 +50,17 @@ class MainFragment : Fragment() {
             messageTV.text = text
         }
         connectButton.setOnClickListener {
-            webSocket = okHttpClient.newWebSocket(createRequest(),webSocketListener)
+            viewModel.makeConnection()
         }
 
         disconnectButton.setOnClickListener {
-            webSocket?.close(1000,"Closed manually!")
+            viewModel.disconnect()
         }
 
         sendMessageButton.setOnClickListener {
             val text = messageET.text.toString()
-
-                webSocket?.send(text)
-                viewModel.addMessages(Pair(true,text))
-
+             viewModel.sendMessage(text)
         }
 
-    }
-    //On Connect Button
-    private fun createRequest(): Request{
-        val url = "wss://${Constants.CLUSTER_ID}.piesocket.com/v3/1?api_key=${Constants.API_KEY}"
-        return Request.Builder().url(url).build()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        okHttpClient.dispatcher.executorService.shutdown()
     }
 }
